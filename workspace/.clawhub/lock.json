@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "skills": {
+    "summarize": {
+      "version": "1.0.0",
+      "installedAt": 1774253701868
+    },
+    "baoyu-image-gen": {
+      "version": "1.0.0",
+      "installedAt": 1774256162923
+    },
+    "grok-image-generate": {
+      "version": "1.0.0",
+      "installedAt": 1774257061914
+    },
+    "nano-banana-pro": {
+      "version": "1.0.1",
+      "installedAt": 1774257961390
+    }
+  }
+}

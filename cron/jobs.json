@@ -1,0 +1,138 @@
+{
+  "version": 1,
+  "jobs": [
+    {
+      "id": "93ec4707-2bdc-4877-8794-5928a0e2e392",
+      "agentId": "main",
+      "sessionKey": "agent:main:main",
+      "name": "Joyce Daily 8PM Report",
+      "enabled": true,
+      "createdAtMs": 1774340363949,
+      "updatedAtMs": 1774356636251,
+      "schedule": {
+        "expr": "0 20 * * *",
+        "tz": "Asia/Taipei",
+        "kind": "cron"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "你是 Joyce，營運數據分析師。現在是晚上 8 點。請根據今天的系統日誌，為「SRS 單字學習卡 PWA」撰寫今日營運報告。報告包含：1. 體驗版領取人數 2. 點擊購買初步轉化率 3. 營運建議。\n完成後，請透過 sessions_send 將這份報告發送給主代理人「小艾 (agent:main:main)」。小艾會負責最後的彙整與向 Alex 匯報。"
+      },
+      "delivery": {
+        "mode": "none",
+        "channel": "telegram",
+        "to": "8350790719"
+      },
+      "state": {
+        "nextRunAtMs": 1774440000000,
+        "lastError": "⚠️ API rate limit reached. Please try again later.",
+        "lastRunAtMs": 1774356618488,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 17763,
+        "lastErrorReason": "rate_limit",
+        "lastDelivered": false,
+        "lastDeliveryStatus": "not-delivered",
+        "lastDeliveryError": "⚠️ API rate limit reached. Please try again later.",
+        "consecutiveErrors": 1
+      }
+    },
+    {
+      "id": "8888390f-08b7-4f29-b43c-9c2c1837b849",
+      "agentId": "main",
+      "sessionKey": "agent:main:main",
+      "name": "Joyce 每日數據彙報 (SRS)",
+      "enabled": true,
+      "createdAtMs": 1774404967052,
+      "updatedAtMs": 1774404970912,
+      "schedule": {
+        "everyMs": 86400000,
+        "kind": "every",
+        "anchorMs": 1774445400000
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "message": "現在是晚上 9:30。請作為營運數據分析師 Joyce，向 CEO Alex 匯報今日「SRS 體驗領取數」與「預期轉化率」，並提出 YouTube 推廣引流的初步洞察。請維持 Joyce 專業且注重數據的口吻。",
+        "thinking": "off",
+        "timeoutSeconds": 60
+      },
+      "delivery": {
+        "to": "8350790719",
+        "channel": "telegram",
+        "mode": "announce",
+        "bestEffort": true
+      },
+      "state": {
+        "nextRunAtMs": 1774445400000
+      }
+    },
+    {
+      "id": "e80de5b0-af8b-4ecb-8ba4-0718da606790",
+      "agentId": "emba_master",
+      "sessionKey": "agent:emba_master:direct:8350790719",
+      "name": "提醒繳交霹靂國際作業",
+      "enabled": true,
+      "deleteAfterRun": true,
+      "createdAtMs": 1774418853412,
+      "updatedAtMs": 1774418853412,
+      "schedule": {
+        "at": "2026-03-25T09:00:00.000Z",
+        "kind": "at"
+      },
+      "sessionTarget": "session:agent:emba_master:direct:8350790719",
+      "wakeMode": "now",
+      "payload": {
+        "message": "現在已經 17:00 了，請立刻發送一則提醒給 Alex，提醒他將這週六『霹靂國際』個案 PPT 作業 Email 給助教邱柏楷 (mike60638@gmail.com)。這是一則重要的交作業提醒！",
+        "kind": "agentTurn"
+      },
+      "delivery": {
+        "mode": "announce",
+        "to": "8350790719"
+      },
+      "state": {
+        "nextRunAtMs": 1774429200000
+      }
+    },
+    {
+      "id": "ed207fd3-e34d-4d13-8620-7612465f5168",
+      "agentId": "main",
+      "sessionKey": "agent:main:direct:8350790719",
+      "name": "nightly-security-audit",
+      "enabled": true,
+      "createdAtMs": 1774420580070,
+      "updatedAtMs": 1774421655171,
+      "schedule": {
+        "tz": "Asia/Taipei",
+        "kind": "cron",
+        "expr": "0 3 * * *"
+      },
+      "sessionTarget": "isolated",
+      "wakeMode": "now",
+      "payload": {
+        "kind": "agentTurn",
+        "model": "google/gemini-3.1-pro-preview",
+        "message": "Execute this command, then summarize the output into a concise security report. List all 13 items with emoji status indicators (🚨/⚠️/✅). Start with a one-line summary header showing critical/warn/ok counts. Command: bash ~/.openclaw/workspace/scripts/nightly-security-audit.sh"
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "telegram",
+        "to": "8350790719"
+      },
+      "state": {
+        "nextRunAtMs": 1774465200000,
+        "lastRunAtMs": 1774420611633,
+        "lastRunStatus": "error",
+        "lastStatus": "error",
+        "lastDurationMs": 1043538,
+        "lastError": "⚠️ 📝 Edit: `in ~/.openclaw/workspace/scripts/nightly-security-audit.sh (103 chars)` failed",
+        "lastDelivered": true,
+        "lastDeliveryStatus": "delivered",
+        "consecutiveErrors": 1
+      }
+    }
+  ]
+}

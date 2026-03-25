@@ -1,0 +1,177 @@
+{
+  "meta": {
+    "lastTouchedVersion": "2026.3.23-2",
+    "lastTouchedAt": "2026-03-25T05:38:41.262Z"
+  },
+  "wizard": {
+    "lastRunAt": "2026-03-23T06:17:56.577Z",
+    "lastRunVersion": "2026.3.13",
+    "lastRunCommand": "onboard",
+    "lastRunMode": "local"
+  },
+  "auth": {
+    "profiles": {
+      "google:default": {
+        "provider": "google",
+        "mode": "api_key"
+      },
+      "google:backup": {
+        "provider": "google",
+        "mode": "api_key"
+      },
+      "anthropic:default": {
+        "provider": "anthropic",
+        "mode": "api_key"
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "google/gemini-3.1-pro-preview",
+        "fallbacks": [
+          "anthropic/claude-sonnet-4-5"
+        ]
+      },
+      "models": {
+        "google/gemini-3-flash-preview": {},
+        "anthropic/claude-sonnet-4-5": {
+          "alias": "claude",
+          "params": {
+            "cacheRetention": "short"
+          }
+        }
+      },
+      "workspace": "/Users/alex-ai/.openclaw/workspace",
+      "contextPruning": {
+        "mode": "cache-ttl",
+        "ttl": "1h"
+      },
+      "compaction": {
+        "mode": "safeguard"
+      },
+      "heartbeat": {
+        "every": "30m"
+      }
+    },
+    "list": [
+      {
+        "id": "main",
+        "tools": {
+          "profile": "full"
+        }
+      },
+      {
+        "id": "emba_master",
+        "name": "EMBA_Master",
+        "workspace": "/Users/alex-ai/.openclaw/workspace-emba_master",
+        "agentDir": "/Users/alex-ai/.openclaw/agents/emba_master/agent",
+        "model": "google/gemini-3.1-pro-preview"
+      }
+    ]
+  },
+  "tools": {
+    "profile": "coding",
+    "web": {
+      "search": {
+        "enabled": true,
+        "provider": "gemini"
+      }
+    }
+  },
+  "bindings": [
+    {
+      "type": "route",
+      "agentId": "emba_master",
+      "match": {
+        "channel": "telegram",
+        "accountId": "emba"
+      }
+    },
+    {
+      "type": "route",
+      "agentId": "main",
+      "match": {
+        "channel": "telegram",
+        "accountId": "default"
+      }
+    }
+  ],
+  "commands": {
+    "native": "auto",
+    "nativeSkills": "auto",
+    "restart": true,
+    "ownerDisplay": "raw"
+  },
+  "session": {
+    "dmScope": "per-peer"
+  },
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "dmPolicy": "pairing",
+      "allowFrom": [
+        "8350790719"
+      ],
+      "groupPolicy": "open",
+      "streaming": "partial",
+      "accounts": {
+        "default": {
+          "dmPolicy": "pairing",
+          "botToken": "8601325847:AAHo6OK2fttzb7ODInpQu54_QNuxX5dkUzQ",
+          "groupPolicy": "allowlist",
+          "streaming": "partial"
+        },
+        "emba": {
+          "dmPolicy": "pairing",
+          "botToken": "8636503526:AAEhYWOXLeltWQGdtKVtuY1cFZRYAH4hu5M",
+          "groupPolicy": "allowlist",
+          "streaming": "partial"
+        }
+      },
+      "defaultAccount": "default"
+    }
+  },
+  "gateway": {
+    "port": 18789,
+    "mode": "local",
+    "bind": "loopback",
+    "auth": {
+      "mode": "token",
+      "token": "6214930b6be53dbf4e8cbb31f74841e1fad9e5ec2addd8a5"
+    },
+    "tailscale": {
+      "mode": "off",
+      "resetOnExit": false
+    },
+    "nodes": {
+      "denyCommands": [
+        "camera.snap",
+        "camera.clip",
+        "screen.record",
+        "contacts.add",
+        "calendar.add",
+        "reminders.add",
+        "sms.send"
+      ]
+    }
+  },
+  "plugins": {
+    "entries": {
+      "telegram": {
+        "enabled": true
+      },
+      "google": {
+        "enabled": true,
+        "config": {
+          "webSearch": {
+            "apiKey": "AIzaSyDBOFcgiHVIFMlYx5vGQHbm5KLrOQiNuxA"
+          }
+        }
+      },
+      "anthropic": {
+        "enabled": true
+      }
+    }
+  }
+}

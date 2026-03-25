@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SRS Pro - Tinder-like Swipe & GPU 翻牌特效</title>
+  <style>
+    /* 核心佈局與重置 */
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #f0f2f5;
+      margin: 0;
+      overflow: hidden;
+      font-family: 'PingFang TC', 'Helvetica Neue', sans-serif;
+    }
+
+    /* 3D 空間容器 */
+    .card-container {
+      width: 320px;
+      height: 480px;
+      perspective: 1200px; /* 增強 3D 深度感 */
+      position: relative;
+    }
+
+    /* 單字卡本身 (加入硬體加速與 GPU 優化) */
+    .card {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      transform-style: preserve-3d;
+      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      will-change: transform; /* 提示瀏覽器啟用 GPU 加速 */
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* 正反面共用樣式 (防止翻轉時閃爍) */
+    .card-face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 20px;
+      background: white;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 30px;
+      box-sizing: border-box;
+      text-align: center;
+      /* 核心：隱藏背面，解決 iOS Safari 破圖 */
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+
+    /* 正面樣式 (英文單字) */
+    .card-front {
+      background: linear-gradient(135deg, #ffffff 0%, #f9fafc 100%);
+    }
+
+    /* 背面樣式 (中文解釋與例句) */
+    .card-back {
+      transform: rotateY(180deg);
+      background: linear-gradient(135deg, #f9fafc 0%, #f0f4f8 100%);
+    }
+
+    /* 翻牌狀態 */
+    .card.flipped {
+      transform: rotateY(180deg);
+    }
+
+    /* 排版細節 */
+    .word { font-size: 36px; font-weight: 800; color: #2c3e50; }
+    .pos { font-size: 16px; color: #7f8c8d; margin-top: 8px; font-weight: 500; }
+    .meaning { font-size: 28px; color: #e74c3c; font-weight: bold; margin-bottom: 20px; }
+    .sentence { font-size: 16px; color: #34495e; margin-top: 15px; font-style: italic; line-height: 1.5; }
+    .translation { font-size: 14px; color: #95a5a6; margin-top: 8px; line-height: 1.5; }
+    
+    /* 滑動提示 (Swipe Hint) */
+    .swipe-hint {
+      position: absolute;
+      top: 40px;
+      font-size: 24px;
+      font-weight: 800;
+      text-transform: uppercase;
+      padding: 8px 16px;
+      border-radius: 8px;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      z-index: 10;
+      pointer-events: none;
+    }
+    .hint-nope { left: 20px; color: #e74c3c; border: 4px solid #e74c3c; transform: rotate(-15deg); }
+    .hint-yep { right: 20px; color: #2ecc71; border: 4px solid #2ecc71; transform: rotate(15deg); }
+
+  </style>
+</head>
+<body>
+
+  <div class="card-container" id="card-container">
+    <div class="card" id="active-card">
+      
+      <!-- 提示標籤 -->
+      <div class="swipe-hint hint-nope" id="hint-nope">忘記</div>
+      <div class="swipe-hint hint-yep" id="hint-yep">記得</div>
+
+      <!-- 正面 -->
+      <div class="card-face card-front">
+        <div class="word">abandon</div>
+        <div class="pos">v.</div>
+        <p style="color:#bdc3c7; font-size:12px; position:absolute; bottom:20px;">[ 點擊翻面 ]</p>
+      </div>
+
+      <!-- 背面 -->
+      <div class="card-face card-back">
+        <div class="meaning">放棄</div>
+        <div class="sentence">"He abandoned his attempt to climb the mountain."</div>
+        <div class="translation">他放棄了攀登這座山的嘗試。</div>
+        <p style="color:#bdc3c7; font-size:12px; position:absolute; bottom:20px;">[ 左滑忘記 👈 👉 右滑記得 ]</p>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const card = document.getElementById('active-card');
+    const hintNope = document.getElementById('hint-nope');
+    const hintYep = document.getElementById('hint-yep');
+    
+    let isDragging = false;
+    let startX = 0;
+    let currentX = 0;
+    let isFlipped = false;
+
+    // 點擊翻牌邏輯
+    card.addEventListener('click', (e) => {
+      if (Math.abs(currentX) > 10) return; // 如果在滑動，就不觸發翻轉
+      isFlipped = !isFlipped;
+      // 確保在翻轉時沒有位移
+      card.style.transform = isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)';
+      card.classList.toggle('flipped', isFlipped);
+    });
+
+    // Touch 事件 (手機端 Swipe 邏輯)
+    card.addEventListener('touchstart', (e) => {
+      // 只有翻到背面（看到中文）時，才允許左右滑動判定
+      if (!isFlipped) return;
+      isDragging = true;
+      startX = e.touches[0].clientX;
+      card.style.transition = 'none'; // 滑動時取消動畫延遲，跟隨手指
+    });
+
+    card.addEventListener('touchmove', (e) => {
+      if (!isDragging || !isFlipped) return;
+      currentX = e.touches[0].clientX - startX;
+      
+      // 計算旋轉角度與透明度 (位移越多，旋轉越大)
+      const rotateZ = currentX * 0.05;
+      
+      // 因為卡片已經是 180deg (背面)，所以要在這個基礎上疊加位移與 Z軸旋轉
+      card.style.transform = `rotateY(180deg) translate(${currentX}px, 0) rotateZ(${rotateZ}deg)`;
+
+      // 顯示提示標籤 (透明度映射)
+      if (currentX > 0) {
+        hintYep.style.opacity = Math.min(currentX / 100, 1);
+        hintNope.style.opacity = 0;
+      } else {
+        hintNope.style.opacity = Math.min(Math.abs(currentX) / 100, 1);
+        hintYep.style.opacity = 0;
+      }
+    });
+
+    card.addEventListener('touchend', (e) => {
+      if (!isDragging || !isFlipped) return;
+      isDragging = false;
+      card.style.transition = 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+      
+      const threshold = 100; // 滑動超過 100px 視為判定成功
+      
+      if (currentX > threshold) {
+        // 向右滑：記得 (SM2 演算法：加分)
+        card.style.transform = `rotateY(180deg) translate(1000px, 0) rotateZ(30deg)`;
+        console.log("【觸發】使用者記得此單字，呼叫 SM2 升級 API");
+        setTimeout(resetCard, 400); // 模擬載入下一張
+      } else if (currentX < -threshold) {
+        // 向左滑：忘記 (SM2 演算法：重置)
+        card.style.transform = `rotateY(180deg) translate(-1000px, 0) rotateZ(-30deg)`;
+        console.log("【觸發】使用者忘記此單字，呼叫 SM2 重置 API");
+        setTimeout(resetCard, 400); // 模擬載入下一張
+      } else {
+        // 未達標：彈回原位
+        card.style.transform = 'rotateY(180deg)';
+        hintYep.style.opacity = 0;
+        hintNope.style.opacity = 0;
+      }
+      currentX = 0;
+    });
+
+    // 模擬載入下一張卡片的重置邏輯
+    function resetCard() {
+      card.style.transition = 'none';
+      isFlipped = false;
+      card.classList.remove('flipped');
+      card.style.transform = 'rotateY(0deg) translate(0, 0) rotateZ(0deg)';
+      hintYep.style.opacity = 0;
+      hintNope.style.opacity = 0;
+      console.log("下一張卡片已就緒。");
+    }
+  </script>
+</body>
+</html>

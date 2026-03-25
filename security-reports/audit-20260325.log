@@ -1,0 +1,140 @@
+==========================================
+OpenClaw Security Audit Report - Wed Mar 25 14:42:09 CST 2026
+==========================================
+=== [1] OpenClaw Platform Audit ===
+OpenClaw security audit
+Summary: 2 critical · 3 warn · 1 info
+Run deeper: openclaw security audit --deep
+
+CRITICAL
+security.exposure.open_groups_with_elevated Open groupPolicy with elevated tools enabled
+  Found groupPolicy="open" at:
+- channels.telegram.groupPolicy
+With tools.elevated enabled, a prompt injection in those rooms can become a high-impact incident.
+  Fix: Set groupPolicy="allowlist" and keep elevated allowlists extremely tight.
+security.exposure.open_groups_with_runtime_or_fs Open groupPolicy with runtime/filesystem tools exposed
+  Found groupPolicy="open" at:
+- channels.telegram.groupPolicy
+Risky tool exposure contexts:
+- agents.defaults (sandbox=off; runtime=[exec, process]; fs=[read, write, edit, apply_patch]; fs.workspaceOnly=false)
+- agents.list.main (sandbox=off; runtime=[exec, process]; fs=[read, write, edit, apply_patch]; fs.workspaceOnly=false)
+- agents.list.emba_master (sandbox=off; runtime=[exec, process]; fs=[read, write, edit, apply_patch]; fs.workspaceOnly=false)
+Prompt injection in open groups can trigger command/file actions in these contexts.
+  Fix: For open groups, prefer tools.profile="messaging" (or deny group:runtime/group:fs), set tools.fs.workspaceOnly=true, and use agents.defaults.sandbox.mode="all" for exposed agents.
+
+WARN
+gateway.trusted_proxies_missing Reverse proxy headers are not trusted
+  gateway.bind is loopback and gateway.trustedProxies is empty. If you expose the Control UI through a reverse proxy, configure trusted proxies so local-client checks cannot be spoofed.
+  Fix: Set gateway.trustedProxies to your proxy IPs or keep the Control UI local-only.
+gateway.nodes.deny_commands_ineffective Some gateway.nodes.denyCommands entries are ineffective
+  gateway.nodes.denyCommands uses exact node command-name matching only (for example `system.run`), not shell-text filtering inside a command payload.
+- Unknown command names (not in defaults/allowCommands): camera.snap (did you mean: camera.list), camera.clip (did you mean: camera.list), screen.record, contacts.add, calendar.add, reminders.add (did you mean: reminders.list), sms.send (did you mean: sms.search)
+  Fix: Use exact command names (for example: canvas.present, canvas.hide, canvas.navigate, canvas.eval, canvas.snapshot, canvas.a2ui.push, canvas.a2ui.pushJSONL, canvas.a2ui.reset). If you need broader restrictions, remove risky command IDs from allowCommands/default workflows and tighten tools.exec policy.
+security.trust_model.multi_user_heuristic Potential multi-user setup detected (personal-assistant model warning)
+  Heuristic signals indicate this gateway may be reachable by multiple users:
+=== [2] Process & Network Audit ===
+/Users/alex-ai/.openclaw/workspace/scripts/nightly-security-audit-fixed.sh: line 32: lsof: command not found
+✅ No unusual listening ports found.
+=== [3] Sensitive Directory Changes ===
+/Users/alex-ai/.openclaw
+/Users/alex-ai/.openclaw/openclaw.json
+/Users/alex-ai/.openclaw/subagents/runs.json
+/Users/alex-ai/.openclaw/.DS_Store
+/Users/alex-ai/.openclaw/memory
+/Users/alex-ai/.openclaw/memory/emba_master.sqlite
+/Users/alex-ai/.openclaw/memory/main.sqlite
+/Users/alex-ai/.openclaw/identity/device-auth.json
+/Users/alex-ai/.openclaw/openclaw.json.bak
+/Users/alex-ai/.openclaw/workspace
+/Users/alex-ai/.openclaw/workspace/.DS_Store
+/Users/alex-ai/.openclaw/workspace/memory
+/Users/alex-ai/.openclaw/workspace/memory/2026-03-25-shorts-ep1-script.md
+/Users/alex-ai/.openclaw/workspace/memory/2026-03-25-youtube-shorts-workflow.md
+/Users/alex-ai/.openclaw/workspace/memory/2026-03-25-youtube-setup.md
+/Users/alex-ai/.openclaw/workspace/memory/2026-03-25-file-management-policy.md
+/Users/alex-ai/.openclaw/workspace/memory/2026-03-24-joyce.md
+/Users/alex-ai/.openclaw/workspace/memory/2026-03-25-email-marketing-funnel.md
+/Users/alex-ai/.openclaw/workspace/memory/2026-03-25-landing-page-strategy.md
+/Users/alex-ai/.openclaw/workspace/memory/2026-03-25-web-dev-roadmap.md
+✅ No unexpected changes.
+=== [4] System Cron Jobs ===
+✅ No user crontab found.
+=== [5] OpenClaw Cron Jobs ===
+gateway connect failed: Error: gateway closed (1000): 
+Error: gateway closed (1000 normal closure): no close reason
+Gateway target: ws://127.0.0.1:18789
+Source: local loopback
+Config: /Users/alex-ai/.openclaw/openclaw.json
+Bind: loopback
+✅ No unusual OpenClaw cron jobs.
+=== [6] Login & SSH Activity ===
+alex-ai    ttys003                         Tue Mar 24 12:44   still logged in
+alex-ai    ttys003                         Tue Mar 24 12:44 - 12:44  (00:00)
+alex-ai    ttys002                         Tue Mar 24 12:44 - 12:44  (00:00)
+alex-ai    ttys002                         Tue Mar 24 12:43 - 12:43  (00:00)
+alex-ai    ttys000                         Tue Mar 24 12:43 - 12:43  (00:00)
+alex-ai    ttys002                         Mon Mar 23 15:28 - 15:28  (00:00)
+alex-ai    ttys001                         Mon Mar 23 14:59   still logged in
+alex-ai    ttys000                         Mon Mar 23 14:19 - 14:19  (00:00)
+alex-ai    ttys000                         Fri Mar 20 16:24 - 16:24  (00:00)
+alex-ai    ttys003                         Fri Mar 20 14:31 - 14:31  (00:00)
+=== [7] Key File Integrity ===
+/Users/alex-ai/.openclaw/openclaw.json: OK
+✅ OK: Config Integrity Matched
+🚨 Config Integrity Mismatch!
+=== [8] Yellow Line Audit (sudo) ===
+Timestamp                       Thread     Type        Activity             PID    TTL  
+2026-03-25 03:13:49.369723+0800 0x30b756   Activity    0x29d250             76291  0    sudo: (libsystem_info.dylib) Performance impact - Resolve user group list (>17 groups)
+2026-03-25 03:13:49.369734+0800 0x30b756   Default     0x0                  76291  0    sudo: (libsystem_info.dylib) Too many groups requested (2147483647).  Can cause performance issues when network directories are involved
+2026-03-25 03:13:49.378322+0800 0x30b756   Activity    0x29d251             76291  0    sudo: (libsystem_info.dylib) Retrieve User by Name
+2026-03-25 03:13:49.378795+0800 0x30b756   Default     0x0                  76291  0    sudo: Reading config
+2026-03-25 03:13:49.401776+0800 0x30b756   Default     0x0                  76291  0    sudo: Using original path (null)
+2026-03-25 03:13:49.432620+0800 0x30b756   Activity    0x29d252             76291  0    sudo: (libsystem_info.dylib) Performance impact - Resolve user group list (>17 groups)
+2026-03-25 03:13:49.432623+0800 0x30b756   Default     0x0                  76291  0    sudo: (libsystem_info.dylib) Too many groups requested (2147483647).  Can cause performance issues when network directories are involved
+2026-03-25 03:13:49.433216+0800 0x30b756   Activity    0x29d253             76291  0    sudo: (libsystem_info.dylib) Retrieve Group by ID
+2026-03-25 03:13:49.433544+0800 0x30b756   Activity    0x29d254             76291  0    sudo: (libsystem_info.dylib) Retrieve Group by ID
+2026-03-25 03:13:49.434950+0800 0x30b756   Activity    0x29d255             76291  0    sudo: (libsystem_info.dylib) Retrieve Group by ID
+2026-03-25 03:13:49.438688+0800 0x30b756   Activity    0x29d256             76291  0    sudo: (libsystem_info.dylib) Retrieve Group by ID
+2026-03-25 03:13:49.442041+0800 0x30b756   Activity    0x29d257             76291  0    sudo: (libsystem_info.dylib) Retrieve Group by ID
+2026-03-25 03:13:49.444920+0800 0x30b756   Activity    0x29d258             76291  0    sudo: (libsystem_info.dylib) Retrieve Group by ID
+2026-03-25 03:13:49.447830+0800 0x30b756   Activity    0x29d259             76291  0    sudo: (libsystem_info.dylib) Retrieve Group by ID
+2026-03-25 03:13:49.450664+0800 0x30b756   Activity    0x29d25a             76291  0    sudo: (libsystem_info.dylib) Retrieve Group by ID
+2026-03-25 03:13:49.453499+0800 0x30b756   Activity    0x29d25b             76291  0    sudo: (libsystem_info.dylib) Retrieve Group by ID
+2026-03-25 03:13:49.454626+0800 0x30b756   Activity    0x29d25c             76291  0    sudo: (libsystem_info.dylib) Retrieve Group by ID
+2026-03-25 03:13:49.455656+0800 0x30b756   Activity    0x29d25d             76291  0    sudo: (libsystem_info.dylib) Retrieve Group by ID
+2026-03-25 03:13:49.458184+0800 0x30b756   Activity    0x29d25e             76291  0    sudo: (libsystem_info.dylib) Retrieve Group by ID
+2026-03-25 03:13:49.459018+0800 0x30b756   Activity    0x29d25f             76291  0    sudo: (libsystem_info.dylib) Retrieve Group by ID
+2026-03-25 03:13:49.459819+0800 0x30b756   Activity    0x29d260             76291  0    sudo: (libsystem_info.dylib) Retrieve Group by ID
+2026-03-25 03:13:49.462228+0800 0x30b756   Activity    0x29d261             76291  0    sudo: (libsystem_info.dylib) Retrieve Group by ID
+2026-03-25 03:13:49.464712+0800 0x30b756   Activity    0x29d262             76291  0    sudo: (libsystem_info.dylib) Retrieve Group by ID
+2026-03-25 03:13:49.466968+0800 0x30b756   Activity    0x29d263             76291  0    sudo: (libsystem_info.dylib) Retrieve Group by ID
+2026-03-25 03:13:49.469322+0800 0x30b756   Activity    0x29d264             76291  0    sudo: (libsystem_info.dylib) Retrieve Group by ID
+2026-03-25 03:13:49.471618+0800 0x30b756   Activity    0x29d265             76291  0    sudo: (libsystem_info.dylib) Retrieve Group by ID
+2026-03-25 03:13:49.473953+0800 0x30b756   Activity    0x29d266             76291  0    sudo: (libsystem_info.dylib) Retrieve Group by ID
+2026-03-25 03:13:49.476153+0800 0x30b756   Activity    0x29d267             76291  0    sudo: (libsystem_info.dylib) Retrieve Group by ID
+2026-03-25 03:13:49.478334+0800 0x30b756   Activity    0x29d268             76291  0    sudo: (libsystem_info.dylib) Retrieve Group by ID
+2026-03-25 03:13:49.480984+0800 0x30b756   Activity    0x29d269             76291  0    sudo: (libsystem_info.dylib) Retrieve Group by ID
+2026-03-25 03:13:49.536027+0800 0x30b756   Activity    0x29d26a             76291  0    sudo: (libsystem_info.dylib) Retrieve Group by ID
+2026-03-25 03:13:49.536388+0800 0x30b756   Default     0x0                  76291  0    sudo:     root : PWD=/ ; USER=root ; COMMAND=/etc/periodic/daily/999.local
+=== [9] Disk Usage ===
+/dev/disk1s4s1   466Gi    22Gi   173Gi    12%    407k  1.8G    0%   /
+=== [10] Gateway Environment ===
+  501 92410 92409   0  1:38PM ??         8:34.11 openclaw-gateway     
+=== [11] DLP Scan (Memory & Logs) ===
+✅ No plaintext private keys or mnemonics detected.
+=== [12] Skill/MCP Integrity ===
+✅ Skill Integrity Matched.
+=== [13] Brain Backup Sync ===
+?? .DS_Store
+?? .clawhub/
+?? .openclaw/
+?? 2026-03-23-17-30-00-emba-puppies.png
+?? AGENTS.md
+?? HEARTBEAT.md
+?? IDENTITY.md
+?? MEMORY.md
+?? SOUL.md
+?? TOOLS.md
+==========================================
+Summary: 0 critical · 0 warn · 2 ok
+==========================================

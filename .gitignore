@@ -1,0 +1,29 @@
+# Ignore media, logs, and temp
+logs/
+media/
+*.tmp
+*.sock
+*.lock
+.DS_Store
+*.bak
+*.bak.*
+openclaw.tmp.json
+
+# Dynamic/ephemeral state
+subagents/
+browser/
+canvas/
+delivery-queue/
+telegram/
+
+# Exclude massive session transcripts
+agents/*/sessions/*.jsonl
+
+# Exclude heavy assets
+workspace/assets/web-dev/repo-clone/
+workspace/bun.zip
+workspace/bun-darwin-x64-baseline/
+workspace/*.png
+workspace/*.jpg
+workspace/*.docx
+workspace/*.pptx
